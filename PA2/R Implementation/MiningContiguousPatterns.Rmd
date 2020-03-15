@@ -1,0 +1,130 @@
+---
+title: "Assignment 2"
+output: html_notebook
+---
+
+## Input
+The provided input file ("reviews_sample.txt") consists of 10,000 online reviews from Yelp users. The reviews have been stemmed (to remove the postfix of each word so words with similar semantics can have the same form), and most of the punctuation has been removed. Therefore, each line is basically a list of strings separated by spaces.
+
+An example line is provided below:
+`
+cold cheap beer good bar food good service looking great pittsburgh style fish sandwich place breading light fish plentiful good side home cut fry good grilled chicken salad steak soup day homemade lot special great place lunch bar snack beer
+`
+## Task
+You need to implement an algorithm to mine contiguous sequential patterns that are frequent in the input data. A contiguous sequential pattern is a sequence of items that frequently appears as a consecutive subsequence in a database of many sequences. For example, if the database is
+`
+A,B,A,C
+A,C,A,B,A,B
+B,A,A,C,D
+`
+and the minimum support is 2, then patterns like "A,B,A" or "A,C" are both frequent contiguous sequential patterns, while the pattern "A,A" is not a frequent contiguous sequential pattern because in the first two sequences the two A's are not consecutive to each other. Notice that it is still a frequent sequential pattern though.
+
+Also, notice that multiple appearances of a subsequence in a single sequence record only counts once. For example, the pattern "A,B" appears 1 time in the first sequence and 2 times in the second, but its support should be calculated as 2, as there are only 2 records containing subsequence "A,B".
+
+## Install Packages
+Package: https://cran.r-project.org/src/contrib/Archive/CSeqpat/CSeqpat_0.1.0.tar.gz
+Instructions: https://stackoverflow.com/questions/16412638/install-an-r-package-directly-from-a-url-for-the-package-source
+Will also need package called 'slam'
+```{r}
+# install.packages("https://cran.r-project.org/src/contrib/Archive/CSeqpat/CSeqpat_0.1.0.tar.gz",
+#                  repos=NULL, method="libcurl")
+```
+
+
+```{r}
+# rm(list=ls())
+# library(CSeqpat)
+setwd("~/UIUC/cs412-intro-to-dm/PA2/R Implementation")
+source("CSeqpat.R") # need the modified source file
+```
+
+## Implementation
+Thanks to: https://rdrr.io/cran/CSeqpat/man/CSeqpat.html
+Package: https://cran.r-project.org/src/contrib/Archive/CSeqpat/
+
+### Docs Example
+```{r}
+test1 <- c("hoagie institution food year year road ",
+"place little dated opened weekend fresh food")
+tf <- tempfile()
+writeLines(test1, tf)
+CSeqpat(tf, 2, "\t")
+```
+
+### Example Modified
+```{r}
+test1 <- c("hoagie institution food year year road ",
+"place little dated opened weekend fresh food",
+"fresh food and sandwiches")
+
+# write to a text file
+fileConn<-file("test1.txt")
+writeLines(test1, fileConn)
+close(fileConn)
+
+#traceback()
+df = CSeqpat("test1.txt", 2, "\t")
+```
+
+### Write to File
+```{r}
+head(df)
+# reverse dataframe
+final_df = df[c('Support', 'Freq_Phrases')] 
+# use gsub to replace spaces with semicolon (;)
+final_df$Freq_Phrases = gsub(' ', ';', final_df$Freq_Phrases)
+
+# don't add quotes or write col/row names
+# use colon as delimter
+write.table(final_df, "test1_output.txt", quote=FALSE, sep=":", 
+            row.names=FALSE, col.names=FALSE)
+```
+
+## Output
+Please set the relative minimum support to 0.01 and run it on the given text file. In other words, you need to extract all the frequent contiguous sequential patterns that have an absolute support no smaller than 100.
+
+Please write all the frequent contiguous sequential patterns along with their absolute supports into a text file named "patterns.txt". Every line corresponds to exactly one pattern you found and should be in the following format:
+
+support:item_1;item_2;item_3
+
+For example, suppose the phrase "parking lot" has an absolute support 133, then the line corresponding to this frequent contiguous sequential pattern in "patterns.txt" should be:
+
+133:parking;lot
+
+Notice that the order does matter in sequential pattern mining. That is to say,
+
+133:lot;parking
+
+may be graded as incorrect.
+
+## Read in data ( Not Necessary)
+https://stackoverflow.com/questions/6602881/text-file-to-list-in-r
+```{r}
+# Read in the data - not necessary
+# https://stat.ethz.ch/R-manual/R-devel/library/base/html/list.files.html
+system.time({
+x <- scan("reviews_sample.txt", what="", sep="\n")
+})
+```
+
+## Run on dataset and time
+```{r}
+system.time({
+traceback()
+df = CSeqpat("reviews_sample.txt", 100, "\t") # absolute minimum support of 100
+})
+```
+
+```{r}
+# reverse dataframe
+final_df = df[c('Support', 'Freq_Phrases')] 
+# use gsub to replace spaces with semicolon (;)
+final_df$Freq_Phrases = gsub(' ', ';', final_df$Freq_Phrases)
+
+# don't add quotes or write col/row names
+# use colon as delimter
+write.table(final_df, "patterns_v1.txt", quote=FALSE, sep=":", 
+            row.names=FALSE, col.names=FALSE)
+```
+
+
